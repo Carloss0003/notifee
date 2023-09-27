@@ -1,5 +1,5 @@
 import { Button, StyleSheet, Text, View } from "react-native";
-import notifee, {AndroidImportance, AuthorizationStatus, EventType} from '@notifee/react-native'
+import notifee, {AndroidImportance, AuthorizationStatus, EventType, TimestampTrigger, TriggerType} from '@notifee/react-native'
 import {useEffect, useState} from 'react'
 
 export default function App(){
@@ -18,6 +18,19 @@ export default function App(){
 
     getPermission()
   }, [])
+
+  notifee.onBackgroundEvent(async ({type, detail}) => {
+    const {notification, pressAction} = detail
+
+    if(type === EventType.PRESS){
+      console.log('tocou na notificação' + pressAction?.id)
+    }
+    if(notification?.id){
+      await notifee.cancelNotification(notification.id)
+    }
+    console.log('Event Background')
+  })
+
   useEffect(()=>{
     return notifee.onForegroundEvent(({type, detail})=>{
       switch(type){
@@ -25,7 +38,7 @@ export default function App(){
           console.log('Usuário descartou a notificação')
           break;
         case EventType.PRESS:
-          console.log('tocou: ' + detail.notification)
+          console.log(detail.notification)
           break
       }
     })
@@ -53,10 +66,44 @@ export default function App(){
       }
     })
   }
+
+  async function handleScaleNotification(){
+    const date = new Date(Date.now())
+
+    date.setMinutes(date.getMinutes() + 1)
+    const trigger:TimestampTrigger = {
+      type: TriggerType.TIMESTAMP,
+      timestamp: date.getTime()
+    }
+    await notifee.createTriggerNotification({
+      title: 'Lembrete Estudar',
+      body: 'Estudar JS ás 15:30',
+      android: {
+        channelId: 'lembrete',
+        importance: AndroidImportance.HIGH,
+        pressAction: {
+          id: 'default'
+        }
+      }
+    }, trigger)
+  }
+  async function listNotification(){
+    notifee.getTriggerNotificationIds()
+    .then((response)=>{
+      console.log(response)
+    })
+  }
+
+  async function handleCancelNotification(){
+    await notifee.cancelNotification("cbeEVWhEgSQKe2SR89im")
+  }
   return(
     <View style={Container.container}>
       <Text style={Container.text}>Notify 2</Text>
       <Button title="enviar noti" onPress={handleNotification}/>
+      <Button title="agendar noti" onPress={handleScaleNotification}/>
+      <Button title="Listar noti" onPress={listNotification}/>
+      <Button title="Cancel noti" onPress={handleCancelNotification}/>
     </View>
   )
 }
