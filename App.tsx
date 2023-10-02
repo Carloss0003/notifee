@@ -1,5 +1,5 @@
 import { Button, StyleSheet, Text, View } from "react-native";
-import notifee, {AndroidImportance, AuthorizationStatus, EventType, TimestampTrigger, TriggerType} from '@notifee/react-native'
+import notifee, {AndroidImportance, AuthorizationStatus, EventType, RepeatFrequency, TimestampTrigger, TriggerType} from '@notifee/react-native'
 import {useEffect, useState} from 'react'
 
 export default function App(){
@@ -97,6 +97,31 @@ export default function App(){
   async function handleCancelNotification(){
     await notifee.cancelNotification("cbeEVWhEgSQKe2SR89im")
   }
+
+  async function  handleNotificationWeek() {
+    const date = new Date(Date.now())
+
+    date.setMinutes(date.getMinutes() + 1)
+
+    const trigger:TimestampTrigger = {
+      type: TriggerType.TIMESTAMP,
+      timestamp: date.getTime(),
+      repeatFrequency: RepeatFrequency.WEEKLY
+    } 
+
+    await notifee.createTriggerNotification({
+      title: 'Lembrete JavaScript',
+      body: 'Está na hora de utilizar JS',
+      android: {
+        channelId: 'lembrete',
+        importance: AndroidImportance.HIGH,
+        pressAction: {
+          id: 'default'
+        }
+      }
+    }, trigger)
+
+  }
   return(
     <View style={Container.container}>
       <Text style={Container.text}>Notify 2</Text>
@@ -104,6 +129,7 @@ export default function App(){
       <Button title="agendar noti" onPress={handleScaleNotification}/>
       <Button title="Listar noti" onPress={listNotification}/>
       <Button title="Cancel noti" onPress={handleCancelNotification}/>
+      <Button title="Agendar noti" onPress={handleNotificationWeek}/>
     </View>
   )
 }
